@@ -341,6 +341,10 @@ PrefabInstance:
       propertyPath: moveSpeed
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 7557269282347939037, guid: 85ab8e95035c2a340afcddc4221c27ef, type: 3}
+      propertyPath: cellPrefab
+      value: 
+      objectReference: {fileID: 1567964547095705671, guid: 3b3db5d563229294ea2fd28d812bd189, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

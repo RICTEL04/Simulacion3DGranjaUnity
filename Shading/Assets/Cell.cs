@@ -27,7 +27,6 @@ public class Cell : MonoBehaviour
         
         if (cellRenderer == null)
         {
-            Debug.LogError($"No se encontró un Renderer en {gameObject.name}");
         }
     }
 

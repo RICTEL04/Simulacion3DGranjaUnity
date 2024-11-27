@@ -1,9 +1,13 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System;
 
 public class TractorAgent : MonoBehaviour
 {
+    public string customSavePath = "C:/MisProyectos/Trayectorias/";
     private NavMeshAgent navMeshAgent;
     private FieldManager[] fieldManagers;
     private FieldManager assignedField;
@@ -12,6 +16,9 @@ public class TractorAgent : MonoBehaviour
     // Velocidad de movimiento del tractor
     public float moveSpeed = 2.0f;
     public float unloadTime = 3f;
+
+    // lista para rastrear la trayectoria
+    private List<TrajectoryPoint> trajectory = new List<TrajectoryPoint>();
 
     void Start()
 {
@@ -24,6 +31,9 @@ public class TractorAgent : MonoBehaviour
         navMeshAgent.stoppingDistance = 0.5f; // Distancia para considerar "llegado"
         navMeshAgent.angularSpeed = 120f; // Velocidad de giro
         navMeshAgent.acceleration = 8f; // Aceleración
+
+        // Iniciar el registro de trayectoria
+        StartCoroutine(TrackTrajectory());
     }
     else
     {
@@ -33,10 +43,59 @@ public class TractorAgent : MonoBehaviour
     }
     initialPosition = transform.position;
 
-    fieldManagers = Object.FindObjectsByType<FieldManager>(FindObjectsSortMode.None);
+    fieldManagers = UnityEngine.Object.FindObjectsByType<FieldManager>(FindObjectsSortMode.None);
     // Buscar puntos de descarga con el tag específico
     dischargePonits = GameObject.FindGameObjectsWithTag("Descarga");
     StartCoroutine(ManageFields());
+}
+
+    // Método para registrar la trayectoria
+    IEnumerator TrackTrajectory()
+    {
+        while (true)
+        {
+            // Registrar la posición actual
+            trajectory.Add(new TrajectoryPoint
+            {
+                timestamp = DateTime.Now.ToString("o"),
+                position = transform.position,
+                speed = navMeshAgent.velocity.magnitude
+            });
+
+            // Guardar trayectoria cada 10 segundos
+            if (trajectory.Count % 10 == 0)
+            {
+                SaveTrajectoryToJson();
+            }
+
+            yield return new WaitForSeconds(1f);
+        }
+    }
+
+    // Método para guardar la trayectoria en un archivo JSON
+    void SaveTrajectoryToJson()
+{
+    TractorTrajectory trajectoryData = new TractorTrajectory
+    {
+        tractorName = gameObject.name,
+        points = trajectory.ToArray()
+    };
+
+    // Create the JSON string here
+    string json = JsonUtility.ToJson(trajectoryData, true);
+
+    string filename = $"Trajectory_{gameObject.name}_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+    
+    try
+    {
+        string path = Path.Combine(Application.persistentDataPath, filename);
+        File.WriteAllText(path, json);
+        Debug.Log($"Trayectoria guardada en: {path}");
+    }
+    catch (Exception e)
+    {
+        Debug.LogError($"Error guardando trayectoria: {e.Message}");
+    }
 }
 
     // Método para moverse al destino usando NavMesh
@@ -132,6 +191,8 @@ public class TractorAgent : MonoBehaviour
                 
                 // Opcional: Añadir un tiempo de espera o detener el movimiento
                 yield return new WaitForSeconds(2f);
+                SaveTrajectoryToJson();
+                break;
             }
                 Debug.Log($"{gameObject.name} no encontró campos disponibles. Intentando nuevamente...");
                 yield return new WaitForSeconds(5f); // Tiempo de espera entre intentos
@@ -162,5 +223,26 @@ public class TractorAgent : MonoBehaviour
         }
 
         return closestPoint;
+    }
+
+    [Serializable]
+    public class TrajectoryPoint
+    {
+        public string timestamp;
+        public Vector3 position;
+        public float speed;
+    }
+
+    [Serializable]
+    public class TractorTrajectory
+    {
+        public string tractorName;
+        public TrajectoryPoint[] points;
+    }
+
+    // Método para guardar la trayectoria final al terminar el campo
+    void OnDestroy()
+    {
+        SaveTrajectoryToJson();
     }
 }
