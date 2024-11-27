@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class FieldManager : MonoBehaviour
 {
@@ -80,26 +81,40 @@ public class FieldManager : MonoBehaviour
         Debug.Log($"Campo {name} liberado.");
     }
 
+    // Elimina los métodos MoveTractor y reemplázalos con la nueva lógica
     IEnumerator SimulateHarvest(GameObject tractor)
 {
+    TractorAgent tractorAgent = tractor.GetComponent<TractorAgent>();
+    NavMeshAgent navMeshAgent = tractor.GetComponent<NavMeshAgent>();
+
     for (int row = 0; row < rows; row += rowSkip)
     {
-        int startCol = (row % 2 == 0) ? 0 : cols - 1;
-        int endCol = (row % 2 == 0) ? cols : -1;
-        int step = (row % 2 == 0) ? 1 : -1;
+        bool isEvenRow = (row % 2 == 0);
+        int startCol = isEvenRow ? 0 : (cols - 1);
+        int endCol = isEvenRow ? cols : -1;
+        int step = isEvenRow ? 1 : -1;
 
         for (int col = startCol; col != endCol; col += step)
         {
             if (!harvestedCells[row, col])
             {
-                harvestedCells[row, col] = true;
-                Vector3 targetPosition = gridStartPosition + new Vector3(col * cellSize, 0.5f, -row * cellSize);
-                yield return StartCoroutine(MoveTractor(tractor, targetPosition));
+                Vector3 targetPosition = gridStartPosition + new Vector3(
+                    col * cellSize, 
+                    0.5f, 
+                    -row * cellSize
+                );
+
+                tractorAgent.GetToTargetPosition(targetPosition);
+
+                // Wait until the cell is harvested (trigger mechanism will handle marking)
+                yield return new WaitUntil(() => harvestedCells[row, col]);
+
+                yield return new WaitForSeconds(0.2f);
             }
         }
     }
 
-    ReleaseField(); // Liberar el campo para que otros tractores puedan usarlo
+    ReleaseField();
     Debug.Log($"{gameObject.name} ha terminado de cosechar el campo {name}.");
 }
 

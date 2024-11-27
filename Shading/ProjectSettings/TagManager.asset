@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Tractor
   - Truck
+  - Field
   layers:
   - Default
   - TransparentFX
