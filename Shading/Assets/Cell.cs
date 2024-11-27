@@ -49,18 +49,16 @@ public class Cell : MonoBehaviour
         col = colIndex;
     }
 
-public void HarvestCell()
+    public void HarvestCell()
     {
         if (!isHarvested)
         {
             isHarvested = true;
             
-            if (cellRenderer != null)
-            {
-                cellRenderer.material.color = harvestedColor;
-            }
+            // En lugar de cambiar el color, destruimos el objeto
+            Destroy(gameObject);
             
-            Debug.Log($"Celda {gameObject.name} cosechada visualmente.");
+            Debug.Log($"Celda {gameObject.name} eliminada.");
         }
     }
 

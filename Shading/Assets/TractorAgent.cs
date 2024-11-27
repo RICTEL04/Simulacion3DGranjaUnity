@@ -7,9 +7,11 @@ public class TractorAgent : MonoBehaviour
     private NavMeshAgent navMeshAgent;
     private FieldManager[] fieldManagers;
     private FieldManager assignedField;
-
+    private GameObject[] dischargePonits;  // Puntos de descarga
+    private Vector3 initialPosition;
     // Velocidad de movimiento del tractor
     public float moveSpeed = 2.0f;
+    public float unloadTime = 3f;
 
     void Start()
 {
@@ -29,8 +31,11 @@ public class TractorAgent : MonoBehaviour
         enabled = false;
         return;
     }
+    initialPosition = transform.position;
 
     fieldManagers = Object.FindObjectsByType<FieldManager>(FindObjectsSortMode.None);
+    // Buscar puntos de descarga con el tag específico
+    dischargePonits = GameObject.FindGameObjectsWithTag("Descarga");
     StartCoroutine(ManageFields());
 }
 
@@ -56,7 +61,27 @@ public class TractorAgent : MonoBehaviour
             if (assignedField != null && assignedField.IsFieldFullyHarvested())
             {
                 Debug.Log($"Tractor: {gameObject.name} terminó con {assignedField.name}");
-                assignedField = null; // Liberar el campo asignado
+                
+                // Buscar el punto de descarga más cercano
+                GameObject closestDischargePoint = FindClosestDischargePoint();
+                
+                if (closestDischargePoint != null)
+                {
+                    // Moverse al punto de descarga
+                    GetToTargetPosition(closestDischargePoint.transform.position);
+                    
+                    // Esperar a llegar al punto de descarga
+                    yield return new WaitUntil(() => 
+                        Vector3.Distance(transform.position, closestDischargePoint.transform.position) <= navMeshAgent.stoppingDistance
+                    );
+                    
+                    // Simular descarga
+                    yield return new WaitForSeconds(unloadTime);
+                    Debug.Log($"{gameObject.name} ha descargado su carga.");
+                }
+
+                // Liberar el campo actual
+                assignedField = null;
             }
 
             // Intentar asignar un nuevo campo si no hay ninguno asignado
@@ -92,6 +117,22 @@ public class TractorAgent : MonoBehaviour
             // Si no hay campos disponibles, espera antes de volver a intentar
             if (assignedField == null)
             {
+                if (fieldManagers.Length > 0 && 
+                System.Array.TrueForAll(fieldManagers, field => field.IsFieldFullyHarvested()))
+            {
+                Debug.Log($"{gameObject.name} ha terminado todos los campos. Regresando a posición inicial.");
+                
+                // Moverse a la posición inicial
+                GetToTargetPosition(initialPosition);
+                
+                // Esperar hasta llegar a la posición inicial
+                yield return new WaitUntil(() => 
+                    Vector3.Distance(transform.position, initialPosition) <= navMeshAgent.stoppingDistance
+                );
+                
+                // Opcional: Añadir un tiempo de espera o detener el movimiento
+                yield return new WaitForSeconds(2f);
+            }
                 Debug.Log($"{gameObject.name} no encontró campos disponibles. Intentando nuevamente...");
                 yield return new WaitForSeconds(5f); // Tiempo de espera entre intentos
             }
@@ -101,5 +142,25 @@ public class TractorAgent : MonoBehaviour
                 yield return new WaitForSeconds(1f);
             }
         }
+    }
+
+    // Método para encontrar el punto de descarga más cercano
+    private GameObject FindClosestDischargePoint()
+    {
+        GameObject closestPoint = null;
+        float closestDistance = Mathf.Infinity;
+
+        foreach (GameObject dischargePoint in dischargePonits)
+        {
+            float distance = Vector3.Distance(transform.position, dischargePoint.transform.position);
+            
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestPoint = dischargePoint;
+            }
+        }
+
+        return closestPoint;
     }
 }
