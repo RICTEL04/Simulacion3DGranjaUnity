@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdc8cfcb117aaf649a481697453e30f9, type: 3}
+  m_Name: DatabasePlacer
+  m_EditorClassIdentifier: 
+  objectsData:
+  - <Name>k__BackingField: Discharge
+    <ID>k__BackingField: 0
+    <Size>k__BackingField: {x: 8, y: 13}
+    <Prefab>k__BackingField: {fileID: 4325086697429143779, guid: dbeda632ccec47840b1d879f4db13580, type: 3}
+    <isConjunto>k__BackingField: 0
+  - <Name>k__BackingField: Tractor
+    <ID>k__BackingField: 1
+    <Size>k__BackingField: {x: 5, y: 12}
+    <Prefab>k__BackingField: {fileID: 4949939745069053097, guid: 03c6f2ed6df3c3c48bc56cf90132cf75, type: 3}
+    <isConjunto>k__BackingField: 0
+  - <Name>k__BackingField: Parcela
+    <ID>k__BackingField: 2
+    <Size>k__BackingField: {x: 30, y: 30}
+    <Prefab>k__BackingField: {fileID: 1618686714674376915, guid: ab9ab3123722c6542926f20d3e699d12, type: 3}
+    <isConjunto>k__BackingField: 0
