@@ -21,6 +21,9 @@ public class TractorAgent : MonoBehaviour
     private float fuelEfficiency;
     private float fuelConsumed = 0f;
 
+    // API 
+    public string herokuApiUrl = "https://{secret}.com/api/trajectory";
+
 
     // lista para rastrear la trayectoria
     private List<TrajectoryPoint> trajectory = new List<TrajectoryPoint>();
@@ -105,12 +108,40 @@ public class TractorAgent : MonoBehaviour
         string path = Path.Combine(Application.persistentDataPath, filename);
         File.WriteAllText(path, json);
         Debug.Log($"Trayectoria guardada en: {path}");
+
+        StartCoroutine(SendTrajectoryToApi(json));
+
     }
     catch (Exception e)
     {
         Debug.LogError($"Error guardando trayectoria: {e.Message}");
     }
 }
+
+IEnumerator SendTrajectoryToApi(string jsonData)
+{
+    using (UnityWebRequest request = new UnityWebRequest(herokuApiUrl, "POST"))
+    {
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        Debug.Log("Enviando datos al API de Heroku...");
+
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            Debug.Log("Datos enviados con éxito: " + request.downloadHandler.text);
+        }
+        else
+        {
+            Debug.LogError("Error al enviar datos: " + request.error);
+        }
+    }
+}
+
 
     // Método para moverse al destino usando NavMesh
     public void GetToTargetPosition(Vector3 targetPosition)
