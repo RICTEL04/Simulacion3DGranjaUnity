@@ -17,12 +17,20 @@ public class TractorAgent : MonoBehaviour
     public float moveSpeed = 2.0f;
     public float unloadTime = 3f;
 
+    // Prodria ser publica para que el usuario lo asigne
+    private float fuelEfficiency;
+    private float fuelConsumed = 0f;
+
+
     // lista para rastrear la trayectoria
     private List<TrajectoryPoint> trajectory = new List<TrajectoryPoint>();
 
     void Start()
 {
     navMeshAgent = GetComponent<NavMeshAgent>();
+    fuelEfficiency = UnityEngine.Random.Range(0.2f, 0.8f); // Eficiencia random
+    Debug.Log($"{gameObject.name} tiene una eficiencia de {fuelEfficiency} L/km.");
+
     
     if (navMeshAgent != null)
     {
@@ -55,11 +63,16 @@ public class TractorAgent : MonoBehaviour
         while (true)
         {
             // Registrar la posición actual
+            float distanceTraveled = Vector3.Distance(transform.position, navMeshAgent.nextPosition);
+            fuelConsumed += distanceTraveled * fuelEfficiency;
+
             trajectory.Add(new TrajectoryPoint
             {
                 timestamp = DateTime.Now.ToString("o"),
                 position = transform.position,
                 speed = navMeshAgent.velocity.magnitude
+                fuelUsed = fuelConsumed
+
             });
 
             // Guardar trayectoria cada 10 segundos
@@ -79,6 +92,7 @@ public class TractorAgent : MonoBehaviour
     {
         tractorName = gameObject.name,
         points = trajectory.ToArray()
+        totalFuelConsumed = fuelConsumed
     };
 
     // Create the JSON string here
@@ -231,6 +245,7 @@ public class TractorAgent : MonoBehaviour
         public string timestamp;
         public Vector3 position;
         public float speed;
+        public float fuelUsed; // New property to track fuel consumption
     }
 
     [Serializable]
@@ -238,6 +253,7 @@ public class TractorAgent : MonoBehaviour
     {
         public string tractorName;
         public TrajectoryPoint[] points;
+        public float totalFuelConsumed; // New property for total fuel
     }
 
     // Método para guardar la trayectoria final al terminar el campo
